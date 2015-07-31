@@ -1,5 +1,8 @@
 package text.search.altf.handlers;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.HashSet;
 
 import org.eclipse.core.commands.AbstractHandler;
@@ -72,10 +75,12 @@ public class AltFHandler extends AbstractHandler {
 	 * The constructor.
 	 */
 	public AltFHandler() {
+		super();
 	}
 	
 
 	public IEditorPart getActiveEditor(IWorkbenchWindow window) {
+		// TODO: more conditions
 		IWorkbenchPage activePage= window.getActivePage();
 		if (activePage == null)
 			return null;
@@ -85,7 +90,9 @@ public class AltFHandler extends AbstractHandler {
 
 	}
 	
+	
 	public IEditorInput getActiveEditorInput(IWorkbenchWindow window) {
+		// TODO: more conditions
 		IEditorPart editor= getActiveEditor(window);
 		if (editor == null)
 			return null;
@@ -102,9 +109,10 @@ public class AltFHandler extends AbstractHandler {
 		return editor.getEditorInput();
 	}	
 	
+	
 	public Object getFileResource(IWorkbenchWindow window) {
-		// getContainer().getActiveEditorInput().getAdapter(IFile.class)
 		Object o = getActiveEditorInput(window).getAdapter(IFile.class);
+		// TODO: it can be null???
 		if (o == null) {
 			System.out.println("getAdapter is null");
 		} else {
@@ -120,39 +128,67 @@ public class AltFHandler extends AbstractHandler {
 		HashSet resources= new HashSet();
 		resources.add(getFileResource(window));
 		IResource[] arr= (IResource[]) resources.toArray(new IResource[resources.size()]);
+		
+		// TODO: can use another method, filter????
 		return FileTextSearchScope.newSearchScope(arr, filter, false);
 	}	
 	
 	
 	private ISearchQuery newQuery(String textPattern, IWorkbenchWindow window) throws CoreException {
+		
+		// TODO: more conditions, it is not always TextSearchPageInput
 		TextSearchPageInput input = null;
 		ISearchQuery query = null;
 		input= new TextSearchPageInput(textPattern, false, false, false, createTextSearchScope(window));
-		//TextSearchQueryProvider.getPreferred() not null;
 		query = TextSearchQueryProvider.getPreferred().createQuery(input);
 		return query;
 	}
 
 	
+	private String insertEscapeChars(String text) {
+		if (text == null || text.equals("")) //$NON-NLS-1$
+			return ""; //$NON-NLS-1$
+		StringBuffer sbIn= new StringBuffer(text);
+		BufferedReader reader= new BufferedReader(new StringReader(text));
+		int lengthOfFirstLine= 0;
+		try {
+			lengthOfFirstLine= reader.readLine().length();
+		} catch (IOException ex) {
+			return ""; //$NON-NLS-1$
+		}
+		StringBuffer sbOut= new StringBuffer(lengthOfFirstLine + 5);
+		int i= 0;
+		while (i < lengthOfFirstLine) {
+			char ch= sbIn.charAt(i);
+			if (ch == '*' || ch == '?' || ch == '\\')
+				sbOut.append("\\"); //$NON-NLS-1$
+			sbOut.append(ch);
+			i++;
+		}
+		return sbOut.toString();
+	}
+
+	
 	private String getText(ISelection selection) {
 		
-		// TODO if selection is not instace of ITextSelection, return empty
+		// TODO if selection is not instance of ITextSelection, return empty
 		String textPattern= "";
-		textPattern = ((ITextSelection) selection).getText();
+		textPattern = insertEscapeChars(((ITextSelection) selection).getText());
 
 		return textPattern;
 		
 	}
 	
+	
 	/**
-	 * the command has been executed, so extract extract the needed information
-	 * from the application context.
+	 * the query always happen when alt+F is called, textPattern will be "" if can not get the selected text
+	 * TODO: check this????
 	 */
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		try{
 			IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindowChecked(event);
 			String textPattern = getText(window.getSelectionService().getSelection());
-	//		NewSearchUI.openSearchDialog(window, "org.eclipse.search.internal.ui.text.TextSearchPage");
+			System.out.println("text pattern is [" + textPattern + "]");
 			ISearchQuery query = newQuery(textPattern, window);
 			NewSearchUI.runQueryInBackground(query);
 		} catch (Exception e) {
