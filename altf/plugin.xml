@@ -5,26 +5,26 @@
    <extension
          point="org.eclipse.ui.commands">
       <category
-            name="Sample Category"
+            name="Search Text Category"
             id="altf.commands.category">
       </category>
       <command
-            name="Sample Command"
+            name="Search Text Command"
             categoryId="altf.commands.category"
-            id="altf.commands.sampleCommand">
+            id="altf.commands.altFCommand">
       </command>
    </extension>
    <extension
          point="org.eclipse.ui.handlers">
       <handler
-            commandId="altf.commands.sampleCommand"
-            class="text.search.altf.handlers.AltFHandler">
+            commandId="altf.commands.altFCommand"
+            class="com.search.text.altf.handlers.AltFHandler">
       </handler>
    </extension>
    <extension
          point="org.eclipse.ui.bindings">
       <key
-            commandId="altf.commands.sampleCommand"
+            commandId="altf.commands.altFCommand"
             contextId="org.eclipse.ui.contexts.window"
             sequence="M3+F"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration">

@@ -1,4 +1,4 @@
-package text.search.altf.handlers;
+package com.search.text.altf.handlers;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,6 +19,7 @@ import org.eclipse.search.ui.text.TextSearchQueryProvider.TextSearchInput;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.eclipse.ui.part.MultiPageEditorPart;
@@ -69,30 +70,38 @@ public class AltFHandler extends AbstractHandler {
 			return fScope;
 		}
 	}
+
 	
-	
-	/**
-	 * The constructor.
-	 */
 	public AltFHandler() {
 		super();
 	}
 	
 
 	public IEditorPart getActiveEditor(IWorkbenchWindow window) {
-		// TODO: more conditions
+
 		IWorkbenchPage activePage= window.getActivePage();
 		if (activePage == null)
 			return null;
 
+		IWorkbenchPart activePart= activePage.getActivePart();
+		if (activePart == null)
+			return null;
+
 		IEditorPart activeEditor= activePage.getActiveEditor();
-		return activeEditor;
+		if (activeEditor == activePart || isOldSearchView(activePart))
+			return activeEditor;
+
+		return null;
 
 	}
 	
 	
+	private static boolean isOldSearchView(IWorkbenchPart part) {
+		return org.eclipse.search.ui.SearchUI.SEARCH_RESULT_VIEW_ID.equals(part.getSite().getId());
+	}
+	
+	
 	public IEditorInput getActiveEditorInput(IWorkbenchWindow window) {
-		// TODO: more conditions
 		IEditorPart editor= getActiveEditor(window);
 		if (editor == null)
 			return null;
@@ -111,35 +120,38 @@ public class AltFHandler extends AbstractHandler {
 	
 	
 	public Object getFileResource(IWorkbenchWindow window) {
-		Object o = getActiveEditorInput(window).getAdapter(IFile.class);
-		// TODO: it can be null???
-		if (o == null) {
-			System.out.println("getAdapter is null");
-		} else {
-			System.out.println(o.toString());
+		
+		IEditorInput eInput = getActiveEditorInput(window);
+		if (eInput == null) {
+			return null;
 		}
-		return o;
+		return getActiveEditorInput(window).getAdapter(IFile.class);
 	}
 	
 	
 	public FileTextSearchScope createTextSearchScope(IWorkbenchWindow window) {
+		
 		String[] filter = new String[]{"*"};
-//		return FileTextSearchScope.newWorkspaceScope(filter, false);
+		
 		HashSet resources= new HashSet();
-		resources.add(getFileResource(window));
+		
+		Object o = getFileResource(window);
+		
+		if (o != null) {
+			resources.add(getFileResource(window));
+		}
+		
 		IResource[] arr= (IResource[]) resources.toArray(new IResource[resources.size()]);
 		
-		// TODO: can use another method, filter????
 		return FileTextSearchScope.newSearchScope(arr, filter, false);
 	}	
 	
 	
 	private ISearchQuery newQuery(String textPattern, IWorkbenchWindow window) throws CoreException {
 		
-		// TODO: more conditions, it is not always TextSearchPageInput
 		TextSearchPageInput input = null;
 		ISearchQuery query = null;
-		input= new TextSearchPageInput(textPattern, false, false, false, createTextSearchScope(window));
+		input= new TextSearchPageInput(textPattern, false, false, true, createTextSearchScope(window));
 		query = TextSearchQueryProvider.getPreferred().createQuery(input);
 		return query;
 	}
@@ -169,28 +181,31 @@ public class AltFHandler extends AbstractHandler {
 	}
 
 	
-	private String getText(ISelection selection) {
+	private String getText(ITextSelection selection) {
 		
-		// TODO if selection is not instance of ITextSelection, return empty
 		String textPattern= "";
-		textPattern = insertEscapeChars(((ITextSelection) selection).getText());
+		textPattern = insertEscapeChars(selection.getText());
 
 		return textPattern;
 		
 	}
 	
 	
-	/**
-	 * the query always happen when alt+F is called, textPattern will be "" if can not get the selected text
-	 * TODO: check this????
-	 */
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		try{
 			IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindowChecked(event);
-			String textPattern = getText(window.getSelectionService().getSelection());
-			System.out.println("text pattern is [" + textPattern + "]");
-			ISearchQuery query = newQuery(textPattern, window);
-			NewSearchUI.runQueryInBackground(query);
+			
+			ISelection selection = window.getSelectionService().getSelection();
+			if (selection instanceof ITextSelection) {
+				String textPattern = getText((ITextSelection)selection);
+//				System.out.println("text pattern is [" + textPattern + "]");
+				
+				ISearchQuery query = newQuery(textPattern, window);
+				NewSearchUI.runQueryInBackground(query);
+			} 
+//			else {
+//				System.out.println("out of scope");
+//			}
 		} catch (Exception e) {
 			// do nothing
 		}
