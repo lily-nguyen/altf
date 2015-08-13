@@ -1,0 +1,3 @@
+- copy the .jar file to dropin folder in Eclipse
+- select the text in a file and press Alt+F. all occurrences of the text will be marked
+- for remove highlights, select nothing and press Alt+F again
