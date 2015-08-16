@@ -1,3 +1,13 @@
+This is a plugin to highlights occurrences of a selected text.
+
+For adding the plugin into Eclipse:
 - copy the .jar file to dropin folder in Eclipse
-- select the text in a file and press Alt+F. all occurrences of the text will be marked
-- for remove highlights, select nothing and press Alt+F again
+- restart Eclipse
+
+For using:
+- select a text in a file 
+- press Alt+F, all positions of text will be marked
+- to remove the highlights, select nothing and press Alt+F again.
+
+
+Hope that can help!
