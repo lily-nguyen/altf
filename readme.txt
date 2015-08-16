@@ -1,4 +1,4 @@
-This is a plugin to highlights occurrences of a selected text.
+This is a plugin to highlight occurrences of a selected text.
 
 For adding the plugin into Eclipse:
 - copy the .jar file to dropin folder in Eclipse
