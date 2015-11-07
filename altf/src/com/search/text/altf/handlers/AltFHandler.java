@@ -151,7 +151,7 @@ public class AltFHandler extends AbstractHandler {
 		
 		TextSearchPageInput input = null;
 		ISearchQuery query = null;
-		input= new TextSearchPageInput(textPattern, false, false, true, createTextSearchScope(window));
+		input= new TextSearchPageInput(textPattern, true, false, true, createTextSearchScope(window));
 		query = TextSearchQueryProvider.getPreferred().createQuery(input);
 		return query;
 	}
